@@ -2,7 +2,7 @@ const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
 const app = express();
-const port = process.env.PORT || 8000;
+const port = process.env.PORT || 7000;
 
 // middleware
 
@@ -30,12 +30,27 @@ async function run() {
     //  cars in get
 
     app.get("/cars", async (req, res) => {
+      console.log('query' , req.query);
+      const page = parseInt(req.query.page)
+      const size = parseInt(req.query.size)    
       const query = {};
       const cursor = carsCollection.find(query);
-      const cars = await cursor.toArray();
+      let cars;
+      if(page || size){
+        cars = await cursor.skip(page*size).limit(size).toArray();
+      }
+      else{
+        cars = await cursor.toArray();
+      }
+      
       res.send(cars);
     });
+    //page pagination
 
+    app.get("/carsCount", async (req, res) => {
+      const count = await carsCollection.estimatedDocumentCount();
+      res.send({count});
+    });
     // cars id find
 
     app.get("/cars/:id", async (req, res) => {
@@ -58,7 +73,7 @@ async function run() {
       const AddService = req.body;
       const result = await carsCollection.insertOne(AddService);
       res.send(result);
-      res.send("hello world");
+      
     });
 
     //delete service
