@@ -25,6 +25,8 @@ async function run() {
     await client.connect();
     const carsCollection = client.db("car-service").collection("car-Items");
     const expertCollection = client.db("car-service").collection("experts");
+    const carsApplicant = client.db("car-service").collection("applicant");
+    
     console.log("connected");
 
     //  cars in get
@@ -83,6 +85,27 @@ async function run() {
       const query = { _id: ObjectId(id) };
       const result = await carsCollection.deleteOne(query);
       res.send(result);
+    });
+
+    app.get("/applicant" , async(req,res) => {
+      const query = {};
+      const cursor = carsApplicant.find(query);
+      const applicant= await cursor.toArray();
+      res.send(applicant);
+    })
+
+
+    // insert applicant data
+    app.post("/applicant" ,async (req,res) =>{
+      const applicant = req.body;
+      const query = {date:applicant.date, slot: applicant.slot}
+      const exists = await carsApplicant.findOne(query);
+      if(exists){
+        return res.send({success :false ,applicant: exists})
+      }
+     
+      const result = await carsApplicant.insertOne(applicant);
+         return res.send({success : true ,result});
     });
   } finally {
     //await client.close();
